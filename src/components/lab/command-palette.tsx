@@ -187,6 +187,7 @@ export default function CommandPalette({
   matcher = "fuzzy",
   morph = true,
   onApply,
+  onPickCommand,
   inspect = false,
   onStateChange,
   width = "max-w-[24rem]",
@@ -197,6 +198,16 @@ export default function CommandPalette({
   morph?: boolean
   /** Runs when ✓ Apply / ⌘⏎ commits the staged clauses. */
   onApply?: (clauses: { command: Command; values: CommandOption[] }[]) => void
+  /**
+   * First refusal on a command picked from the root list, handed whatever is
+   * staged so far. Return true to consume it - the palette then leaves its own
+   * state alone, which is how an "escape hatch" row (one that navigates away
+   * instead of filling a slot) gets to skip ✓ Apply.
+   */
+  onPickCommand?: (
+    command: Command,
+    staged: { command: Command; values: CommandOption[] }[]
+  ) => boolean
   inspect?: boolean
   onStateChange?: (state: CommandPaletteState) => void
   /** Tailwind max-width utility for the palette container. */
@@ -349,6 +360,13 @@ export default function CommandPalette({
   function pick(item: CommandOption | Command) {
     if (!command) {
       const cmd = item as Command
+      if (
+        onPickCommand?.(
+          cmd,
+          clauses.map((c) => ({ command: c.command, values: c.values }))
+        )
+      )
+        return
       if (cmd.slots.length === 0) {
         stageClause(cmd, [])
         return
@@ -691,7 +709,7 @@ export default function CommandPalette({
           <div
             className={`flex flex-wrap items-center gap-1.5 border-b border-border px-3 py-2.5 cursor-text${
               inspect
-                ? " outline outline-[1.5px] -outline-offset-[3px] outline-[#ef4444] outline-dashed"
+                ? "outline outline-[1.5px] -outline-offset-[3px] outline-[#ef4444] outline-dashed"
                 : ""
             }`}
             onClick={() => inputRef.current?.focus()}
@@ -807,7 +825,7 @@ export default function CommandPalette({
           </div>
 
           <motion.div
-            className={`relative overflow-hidden${inspect ? " outline outline-[1.5px] -outline-offset-[3px] outline-[#3b82f6] outline-dashed" : ""}`}
+            className={`relative overflow-hidden${inspect ? "outline outline-[1.5px] -outline-offset-[3px] outline-[#3b82f6] outline-dashed" : ""}`}
             animate={{ height: bodyH ?? "auto" }}
             transition={
               !morph || reduced || bodyFirstRef.current

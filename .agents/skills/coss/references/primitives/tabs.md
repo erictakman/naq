@@ -64,7 +64,9 @@ Sizes are set on `TabsList` and inherited by its tabs. An individual `TabsTab` c
 ```tsx
 <TabsList size="sm">
   <TabsTab value="tab-1">Tab 1</TabsTab>
-  <TabsTab size="lg" value="tab-2">Tab 2</TabsTab>
+  <TabsTab size="lg" value="tab-2">
+    Tab 2
+  </TabsTab>
 </TabsList>
 ```
 

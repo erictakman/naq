@@ -43,7 +43,9 @@ import {
 
 ```tsx
 <Dialog>
-  <DialogTrigger render={<Button variant="outline" />}>Open Dialog</DialogTrigger>
+  <DialogTrigger render={<Button variant="outline" />}>
+    Open Dialog
+  </DialogTrigger>
   <DialogPopup>
     <DialogHeader>
       <DialogTitle>Dialog Title</DialogTitle>
@@ -90,4 +92,3 @@ import {
 - long scrollable content in panel: `p-dialog-5`
 - bare footer variant usage: `p-dialog-6`
 - responsive dialog/drawer variant: `p-drawer-12`
-

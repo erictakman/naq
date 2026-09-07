@@ -2,6 +2,7 @@
 
 ## Stack
 
+- Vinext
 - Vite
 - React
 - TypeScript
@@ -38,6 +39,7 @@ When implementing a Paper design:
 ## Before making large changes
 
 Explain:
+
 - what you intend to change
 - which files will change
 - any architectural implications
@@ -58,10 +60,10 @@ Before creating a new UI component:
 
 For documented components:
 
-* Read the relevant `docs/components/*.md` file.
-* Inspect the actual component source before modifying it.
-* Treat the local source code as the implementation source of truth.
-* Treat the component documentation as guidance for intended usage and integration.
-* Preserve existing accessibility, animation, interaction, and responsive behavior unless the task explicitly requires changing it.
+- Read the relevant `docs/components/*.md` file.
+- Inspect the actual component source before modifying it.
+- Treat the local source code as the implementation source of truth.
+- Treat the component documentation as guidance for intended usage and integration.
+- Preserve existing accessibility, animation, interaction, and responsive behavior unless the task explicitly requires changing it.
 
 Do not install a duplicate component if an equivalent component already exists in the repository.

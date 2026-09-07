@@ -1,10 +1,19 @@
 import { useState } from "react"
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
-import { CreateEventDialog } from "@/components/create-event-dialog"
+import { CreateEventDialog } from "@/components/blocks/events/create-event-dialog"
+import {
+  formatDateValue,
+  toDateValue,
+} from "@/components/blocks/events/date-time-fields"
 import type { EventItem } from "@/lib/events"
+
+const TODAY = toDateValue(new Date())
+// The date and time fields are pickers now, so what they hold reads off their
+// accessible name rather than an input value.
+const dateButton = () => screen.getByRole("button", { name: /^Date/ })
 
 function Harness({ onCreate }: { onCreate: (event: EventItem) => void }) {
   const [open, setOpen] = useState(true)
@@ -24,6 +33,11 @@ async function stageTitle(
 async function stageDateTime(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByText("Date & time"))
   await user.click(screen.getByText("Today"))
+}
+
+// The palette's escape hatch is the shortest way to the form itself.
+async function openForm(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByText("Open the full form"))
 }
 
 describe("CreateEventDialog", () => {
@@ -66,11 +80,35 @@ describe("CreateEventDialog", () => {
     expect(screen.getByRole("textbox", { name: "Event title" })).toHaveValue(
       "Kickoff"
     )
-    expect(screen.getByLabelText("Date")).toHaveValue(
-      new Date().toISOString().slice(0, 10)
-    )
-    expect(screen.getByLabelText("Start time")).toHaveValue("09:00")
+    expect(dateButton()).toHaveAccessibleName(`Date: ${formatDateValue(TODAY)}`)
+    expect(
+      screen.getByRole("button", { name: "Start time: 9:00 AM" })
+    ).toBeInTheDocument()
     expect(screen.getByLabelText("Notes")).toHaveValue("Bring the deck")
+  })
+
+  it("opens the review form straight from the palette, no Apply needed", async () => {
+    const user = userEvent.setup()
+    render(<Harness onCreate={vi.fn()} />)
+
+    await user.click(screen.getByText("Open the full form"))
+
+    expect(screen.getByRole("button", { name: "Commands" })).toBeInTheDocument()
+    expect(screen.getByRole("textbox", { name: "Event title" })).toHaveValue("")
+  })
+
+  it("carries already staged clauses into the form when skipping Apply", async () => {
+    const user = userEvent.setup()
+    render(<Harness onCreate={vi.fn()} />)
+
+    await stageTitle(user, "Straight through")
+    await stageDateTime(user)
+    await user.click(screen.getByText("Open the full form"))
+
+    expect(screen.getByRole("textbox", { name: "Event title" })).toHaveValue(
+      "Straight through"
+    )
+    expect(dateButton()).toHaveAccessibleName(`Date: ${formatDateValue(TODAY)}`)
   })
 
   it("keeps Alex Kim as an organizer that cannot be removed, while other attendees can be", async () => {
@@ -94,7 +132,7 @@ describe("CreateEventDialog", () => {
     expect(screen.queryByText("Sarah Chen")).not.toBeInTheDocument()
   })
 
-  it("disables Create event until title, date, and start time are present, then fires onCreate", async () => {
+  it("disables Create event until a date and start time exist, then fires onCreate", async () => {
     const user = userEvent.setup()
     const onCreate = vi.fn()
     render(<Harness onCreate={onCreate} />)
@@ -107,24 +145,27 @@ describe("CreateEventDialog", () => {
     const createButton = screen.getByRole("button", { name: "Create event" })
     expect(createButton).toBeDisabled()
 
-    fireEvent.change(screen.getByLabelText("Date"), {
-      target: { value: "2026-11-01" },
-    })
+    // A date alone is not enough - the event still has no start time.
+    await user.click(dateButton())
+    await user.click(screen.getByRole("button", { name: "Today" }))
+    expect(dateButton()).toHaveAccessibleName(`Date: ${formatDateValue(TODAY)}`)
     expect(createButton).toBeDisabled()
 
-    fireEvent.change(screen.getByLabelText("Start time"), {
-      target: { value: "09:00" },
-    })
-    expect(createButton).toBeEnabled()
+    await user.click(screen.getByRole("button", { name: "Commands" }))
+    await stageDateTime(user)
+    await user.click(
+      screen.getByRole("button", { name: /Apply 1 staged command/ })
+    )
+    expect(screen.getByRole("button", { name: "Create event" })).toBeEnabled()
 
-    await user.click(createButton)
+    await user.click(screen.getByRole("button", { name: "Create event" }))
 
     expect(onCreate).toHaveBeenCalledTimes(1)
     const created = onCreate.mock.calls[0][0] as EventItem
     expect(created.title).toBe("Untitled draft")
     expect(created.owner).toBe("Alex Kim")
     expect(created.status).toBe("Scheduled")
-    expect(created.start).toBe("2026-11-01T09:00:00.000Z")
+    expect(created.start).toBe(`${TODAY}T09:00:00.000Z`)
   })
 
   it("returns to the palette via Back to commands and preserves the draft", async () => {
@@ -149,9 +190,97 @@ describe("CreateEventDialog", () => {
     expect(screen.getByRole("textbox", { name: "Event title" })).toHaveValue(
       "Preserved title"
     )
-    expect(screen.getByLabelText("Date")).toHaveValue(
-      new Date().toISOString().slice(0, 10)
+    expect(dateButton()).toHaveAccessibleName(`Date: ${formatDateValue(TODAY)}`)
+  })
+
+  it("picks the platform from a select", async () => {
+    const user = userEvent.setup()
+    render(<Harness onCreate={vi.fn()} />)
+
+    await openForm(user)
+    const trigger = screen.getByRole("combobox", { name: "Platform" })
+    expect(trigger).toHaveTextContent("Choose platform")
+
+    await user.click(trigger)
+    await user.click(screen.getByRole("option", { name: "Zoom" }))
+
+    expect(screen.getByRole("combobox", { name: "Platform" })).toHaveTextContent(
+      "Zoom"
     )
+  })
+
+  it("offers a wheel of times behind the start time field", async () => {
+    const user = userEvent.setup()
+    render(<Harness onCreate={vi.fn()} />)
+
+    await openForm(user)
+    await user.click(screen.getByRole("button", { name: /^Start time/ }))
+
+    expect(
+      screen.getByRole("listbox", { name: "Start time" })
+    ).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "9:00 AM" })).toBeInTheDocument()
+  })
+
+  it("completes a contact from an @ mention", async () => {
+    const user = userEvent.setup()
+    render(<Harness onCreate={vi.fn()} />)
+
+    await openForm(user)
+    const contact = screen.getByRole("combobox", { name: "Contact" })
+    await user.type(contact, "@lind")
+
+    await user.click(await screen.findByRole("option", { name: /Lindström/ }))
+
+    expect(contact).toHaveValue("A. Lindström")
+  })
+
+  it("adds an attendee from an @ mention, then removes them", async () => {
+    const user = userEvent.setup()
+    render(<Harness onCreate={vi.fn()} />)
+
+    await openForm(user)
+    const field = screen.getByRole("combobox", { name: "Add attendee" })
+    await user.type(field, "@sarah")
+    await user.click(await screen.findByRole("option", { name: /Sarah Chen/ }))
+
+    expect(
+      screen.getByRole("button", { name: "Remove Sarah Chen" })
+    ).toBeInTheDocument()
+    // The field feeds the list rather than holding the pick.
+    expect(field).toHaveValue("")
+
+    await user.click(screen.getByRole("button", { name: "Remove Sarah Chen" }))
+    expect(
+      screen.queryByRole("button", { name: "Remove Sarah Chen" })
+    ).not.toBeInTheDocument()
+  })
+
+  it("adds an attendee typed as free text on Enter", async () => {
+    const user = userEvent.setup()
+    render(<Harness onCreate={vi.fn()} />)
+
+    await openForm(user)
+    await user.type(
+      screen.getByRole("combobox", { name: "Add attendee" }),
+      "Nadia Rossi{Enter}"
+    )
+
+    expect(
+      screen.getByRole("button", { name: "Remove Nadia Rossi" })
+    ).toBeInTheDocument()
+  })
+
+  it("keeps notes in a textarea that grows with its content", async () => {
+    const user = userEvent.setup()
+    render(<Harness onCreate={vi.fn()} />)
+
+    await openForm(user)
+    const notes = screen.getByLabelText("Notes")
+    await user.type(notes, "Bring the deck")
+
+    expect(notes).toHaveValue("Bring the deck")
+    expect(notes).toHaveClass("field-sizing-content")
   })
 
   it("discards the draft when closed via the X button", async () => {

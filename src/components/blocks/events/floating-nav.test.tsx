@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
-import { FloatingNav } from "@/components/floating-nav"
+import { FloatingNav } from "@/components/blocks/events/floating-nav"
 import type { EventItem } from "@/lib/events"
 
 function Harness({ initialQuery = "" }: { initialQuery?: string }) {
@@ -37,6 +37,71 @@ describe("FloatingNav rest state", () => {
 
     expect(
       screen.getByRole("combobox", { name: "Type a command" })
+    ).toBeInTheDocument()
+  })
+})
+
+describe("FloatingNav create dialog", () => {
+  it("closes the palette on a second click instead of stranding its focus", async () => {
+    const user = userEvent.setup()
+    render(<Harness />)
+    const createButton = screen.getByRole("button", { name: "Create event" })
+
+    await user.click(createButton)
+    expect(
+      screen.getByRole("combobox", { name: "Type a command" })
+    ).toBeInTheDocument()
+
+    await user.click(createButton)
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("combobox", { name: "Type a command" })
+      ).not.toBeInTheDocument()
+    })
+    expect(createButton).toHaveFocus()
+  })
+
+  it("still closes on Escape after the button has been clicked twice", async () => {
+    const user = userEvent.setup()
+    render(<Harness />)
+    const createButton = screen.getByRole("button", { name: "Create event" })
+
+    await user.click(createButton)
+    await user.click(createButton)
+    await user.click(createButton)
+    await user.keyboard("{Escape}")
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("combobox", { name: "Type a command" })
+      ).not.toBeInTheDocument()
+    })
+  })
+
+  it("hands the keyboard to the search field, closing the palette", async () => {
+    const user = userEvent.setup()
+    render(<Harness />)
+
+    await user.click(screen.getByRole("button", { name: "Create event" }))
+    await user.click(screen.getByRole("button", { name: "Search events" }))
+
+    expect(
+      screen.getByRole("searchbox", { name: "Search event names" })
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("combobox", { name: "Type a command" })
+    ).not.toBeInTheDocument()
+
+    // The morph must hold: the old behaviour folded the field straight back
+    // the moment it noticed the create flow.
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Close search" })
+      ).toBeInTheDocument()
+    })
+    expect(
+      screen.getByRole("searchbox", { name: "Search event names" })
     ).toBeInTheDocument()
   })
 })

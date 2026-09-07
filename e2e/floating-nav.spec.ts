@@ -13,6 +13,13 @@ async function openCreateEvent(page: Page) {
   await page.getByRole("button", { name: "Create event" }).click()
 }
 
+// Date & time seeds the draft with a date plus a 09:00-09:30 slot, which is the
+// quickest way past the create button's guards.
+async function stageDateTime(page: Page) {
+  await page.getByText("Date & time", { exact: true }).click()
+  await page.getByRole("option", { name: /Today/ }).click()
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto("/")
 })
@@ -236,7 +243,9 @@ test.describe("Create event — review form", () => {
     await expect(
       page.getByRole("textbox", { name: "Event title" })
     ).toHaveValue("Renewal check-in — Q4 kickoff")
-    await expect(page.getByLabel("Start time")).toHaveValue("09:00")
+    await expect(
+      page.getByRole("button", { name: "Start time: 9:00 AM" })
+    ).toBeVisible()
     await expect(dialog.getByText("Sarah Chen", { exact: true })).toBeVisible()
   })
 
@@ -305,10 +314,16 @@ test.describe("Create event — review form", () => {
     const createButton = dialog.getByRole("button", { name: "Create event" })
     await expect(createButton).toBeDisabled()
 
-    await page.getByLabel("Date").fill("2026-11-01")
+    // A date on its own leaves the event without a start time.
+    await page.getByRole("button", { name: /^Date/ }).click()
+    await page.getByRole("button", { name: "Tomorrow" }).click()
     await expect(createButton).toBeDisabled()
 
-    await page.getByLabel("Start time").fill("09:00")
+    await page.getByRole("button", { name: /^Start time/ }).click()
+    await page.getByRole("option", { name: "10:00 AM" }).click()
+    await expect(
+      page.getByRole("button", { name: "Start time: 10:00 AM" })
+    ).toBeVisible()
     await expect(createButton).toBeEnabled()
   })
 
@@ -320,10 +335,9 @@ test.describe("Create event — review form", () => {
     await page.getByText("Title", { exact: true }).click()
     await combobox.fill("Playwright created event")
     await combobox.press("Enter")
-    await page.getByRole("button", { name: /Apply 1 staged command/ }).click()
+    await stageDateTime(page)
+    await page.getByRole("button", { name: /Apply 2 staged commands/ }).click()
 
-    await page.getByLabel("Date").fill("2026-08-01")
-    await page.getByLabel("Start time").fill("09:00")
     await page
       .locator('[role="presentation"]')
       .getByRole("button", { name: "Create event" })
@@ -333,14 +347,45 @@ test.describe("Create event — review form", () => {
     await expect(page.getByText("Playwright created event")).toBeVisible()
   })
 
+  test("Open the full form skips Apply and carries the staged clause", async ({
+    page,
+  }) => {
+    await openCreateEvent(page)
+    const combobox = page.getByRole("combobox")
+
+    await page.getByText("Title", { exact: true }).click()
+    await combobox.fill("Straight to the form")
+    await combobox.press("Enter")
+    await page.getByText("Open the full form", { exact: true }).click()
+
+    await expect(
+      page.getByRole("textbox", { name: "Event title" })
+    ).toHaveValue("Straight to the form")
+  })
+
+  test("stays fully reachable on a short viewport", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 560 })
+    await openCreateEvent(page)
+    const combobox = page.getByRole("combobox")
+    await page.getByText("Title", { exact: true }).click()
+    await combobox.fill("Short viewport")
+    await combobox.press("Enter")
+    await page.getByRole("button", { name: /Apply 1 staged command/ }).click()
+
+    const dialog = page.locator('[role="presentation"]')
+    // Header and footer are pinned...
+    await expect(dialog.getByRole("button", { name: "Close" })).toBeInViewport()
+    await expect(
+      dialog.getByRole("button", { name: "Create event" })
+    ).toBeInViewport()
+    // ...and the middle scrolls rather than falling off the screen.
+    await page.getByLabel("Notes").scrollIntoViewIfNeeded()
+    await expect(page.getByLabel("Notes")).toBeInViewport()
+  })
+
   test("X close and backdrop click both discard the draft", async ({
     page,
   }) => {
-    // The review form is bottom-anchored with no internal scroll, so at the
-    // default 1280x720 viewport its header (and the Close button) clips
-    // above the top of the screen. Use a taller viewport here so this test
-    // exercises the discard behavior rather than that separate layout bug.
-    await page.setViewportSize({ width: 1280, height: 960 })
     await openCreateEvent(page)
     const combobox = page.getByRole("combobox")
     await page.getByText("Title", { exact: true }).click()
@@ -361,6 +406,128 @@ test.describe("Create event — review form", () => {
     await page.mouse.click(4, 4)
 
     await expect(page.getByText("Also discarded")).toHaveCount(0)
+  })
+})
+
+test.describe("Create event — form fields", () => {
+  async function openForm(page: Page) {
+    await openCreateEvent(page)
+    await page.getByText("Open the full form", { exact: true }).click()
+  }
+
+  test("platform is a select, not free text", async ({ page }) => {
+    await openForm(page)
+
+    const trigger = page.getByRole("combobox", { name: "Platform" })
+    await expect(trigger).toHaveText("Choose platform")
+    await trigger.click()
+    await page.getByRole("option", { name: "Google Meet" }).click()
+
+    await expect(trigger).toHaveText("Google Meet")
+  })
+
+  test("the date field offers presets and a calendar", async ({ page }) => {
+    await openForm(page)
+
+    await page.getByRole("button", { name: /^Date/ }).click()
+    await expect(page.getByRole("button", { name: "Next week" })).toBeVisible()
+    await expect(page.getByRole("grid")).toBeVisible()
+
+    // Pick a day off the calendar itself, not just a preset.
+    await page.getByRole("gridcell").filter({ hasText: /^15$/ }).click()
+    await expect(page.getByRole("button", { name: /^Date: / })).toBeVisible()
+  })
+
+  test("the time field is a wheel that commits when it settles", async ({
+    page,
+  }) => {
+    await openForm(page)
+
+    await page.getByRole("button", { name: /^End time/ }).click()
+    await page.getByRole("option", { name: "11:30 AM" }).click()
+
+    await expect(
+      page.getByRole("button", { name: "End time: 11:30 AM" })
+    ).toBeVisible()
+  })
+
+  test("@ completes a known contact", async ({ page }) => {
+    await openForm(page)
+
+    const contact = page.getByRole("combobox", { name: "Contact" })
+    await contact.fill("@lind")
+    await page.getByRole("option", { name: /Lindström/ }).click()
+
+    await expect(contact).toHaveValue("A. Lindström")
+  })
+
+  test("@ adds an attendee, and so does Enter on a plain name", async ({
+    page,
+  }) => {
+    await openForm(page)
+    const field = page.getByRole("combobox", { name: "Add attendee" })
+
+    await field.fill("@priya")
+    await page.getByRole("option", { name: /Priya Sharma/ }).click()
+    await expect(
+      page.getByRole("button", { name: "Remove Priya Sharma" })
+    ).toBeVisible()
+    await expect(field).toHaveValue("")
+
+    await field.fill("Nadia Rossi")
+    await field.press("Enter")
+    await expect(
+      page.getByRole("button", { name: "Remove Nadia Rossi" })
+    ).toBeVisible()
+
+    await page.getByRole("button", { name: "Remove Priya Sharma" }).click()
+    await expect(
+      page.getByRole("button", { name: "Remove Priya Sharma" })
+    ).toHaveCount(0)
+  })
+
+  test("the notes textarea grows with its content", async ({ page }) => {
+    await openForm(page)
+
+    const notes = page.getByLabel("Notes")
+    const before = (await notes.boundingBox())!.height
+    await notes.fill(["One", "Two", "Three", "Four", "Five", "Six"].join("\n"))
+
+    expect((await notes.boundingBox())!.height).toBeGreaterThan(before)
+  })
+})
+
+test.describe("Create event — the nav in front of it", () => {
+  test("a second click on Create event closes the palette", async ({
+    page,
+  }) => {
+    await openCreateEvent(page)
+    await expect(page.getByRole("combobox")).toBeVisible()
+
+    // The button is aria-hidden behind the open dialog but still on top of it,
+    // so it has to be addressed by selector rather than by role.
+    await page.locator('button[aria-label="Create event"]').click()
+
+    await expect(page.getByRole("combobox")).toHaveCount(0)
+  })
+
+  test("the search button takes the palette's place instead of bouncing", async ({
+    page,
+  }) => {
+    await openCreateEvent(page)
+    await page.getByRole("button", { name: "Search events" }).click()
+
+    const navSearch = page.getByRole("searchbox", {
+      name: "Search event names",
+    })
+    await expect(navSearch).toBeVisible()
+    await expect(page.getByRole("combobox")).toHaveCount(0)
+
+    // The morph used to play and then roll straight back: give it the full
+    // open-and-grow sequence and check the field is still there.
+    await page.waitForTimeout(1000)
+    await expect(navSearch).toBeVisible()
+    await expect(navSearch).toBeFocused()
   })
 })
 
@@ -451,6 +618,22 @@ test.describe("Regression", () => {
     )
   })
 
+  test("the event details modal scrolls on a short viewport", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 520 })
+    await page.getByText("Weekly sales standup").click()
+
+    const dialog = page.getByRole("dialog")
+    await expect(
+      dialog.getByRole("button", { name: "Save changes" })
+    ).toBeInViewport()
+    await expect(dialog.getByRole("button", { name: "Close" })).toBeInViewport()
+
+    await dialog.getByLabel("Notes").scrollIntoViewIfNeeded()
+    await expect(dialog.getByLabel("Notes")).toBeInViewport()
+  })
+
   test("produces no console errors across the full create-event flow", async ({
     page,
   }) => {
@@ -461,9 +644,8 @@ test.describe("Regression", () => {
     await page.getByText("Title", { exact: true }).click()
     await combobox.fill("Console check")
     await combobox.press("Enter")
-    await page.getByRole("button", { name: /Apply 1 staged command/ }).click()
-    await page.getByLabel("Date").fill("2026-08-02")
-    await page.getByLabel("Start time").fill("10:00")
+    await stageDateTime(page)
+    await page.getByRole("button", { name: /Apply 2 staged commands/ }).click()
     await page
       .locator('[role="presentation"]')
       .getByRole("button", { name: "Create event" })

@@ -41,7 +41,9 @@ import {
 
 ```tsx
 <Popover>
-  <PopoverTrigger render={<Button variant="outline" />}>Open Popover</PopoverTrigger>
+  <PopoverTrigger render={<Button variant="outline" />}>
+    Open Popover
+  </PopoverTrigger>
   <PopoverPopup>
     <PopoverTitle>Popover Title</PopoverTitle>
     <PopoverDescription>Popover Description</PopoverDescription>

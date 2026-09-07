@@ -77,7 +77,8 @@ export default function SearchExpandNav({
   onQueryChange,
   onSearch,
   createOpen = false,
-  openCreate,
+  toggleCreate,
+  onSearchOpen,
   createButtonRef,
 }: {
   /** Seeds the recent panel until the user has searched for something. */
@@ -90,7 +91,12 @@ export default function SearchExpandNav({
   /** Runs on submit and on picking a recent search. */
   onSearch?: (value: string) => void
   createOpen?: boolean
-  openCreate?: () => void
+  /** Opens the create flow - and closes it again, since the button stays live
+   *  in front of it. */
+  toggleCreate?: () => void
+  /** Fires just before the field opens, so an owner can stand the create flow
+   *  down first: the search asked for the keyboard and wins. */
+  onSearchOpen?: () => void
   createButtonRef?: RefObject<HTMLButtonElement | null>
 }) {
   const [open, setOpen] = useState(false)
@@ -151,6 +157,11 @@ export default function SearchExpandNav({
 
   function openSearch() {
     clearTimer()
+    // Both the field and the create palette want the keyboard. Say so before
+    // flipping `open`, so the two state changes land in one render and the
+    // "create took over, fold the field" effect below never sees a reason to
+    // roll the morph straight back.
+    onSearchOpen?.()
     setOpen(true)
     if (reduced()) setExpanded(true)
     else timerRef.current = window.setTimeout(() => setExpanded(true), MORPH_MS)
@@ -245,9 +256,11 @@ export default function SearchExpandNav({
   }, [open])
 
   // "/" opens the field from anywhere on the page, unless the user is already
-  // typing somewhere else or the create dialog owns the keyboard.
+  // typing somewhere else - including inside the create palette, where a "/"
+  // is just a character. Anywhere else it cancels the create flow in favour of
+  // the search, same as the search button does.
   useEffect(() => {
-    if (open || createOpen) return undefined
+    if (open) return undefined
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "/" || isTypingTarget(event.target)) return
       event.preventDefault()
@@ -256,7 +269,7 @@ export default function SearchExpandNav({
     document.addEventListener("keydown", onKeyDown)
     return () => document.removeEventListener("keydown", onKeyDown)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, createOpen])
+  }, [open])
 
   useEffect(() => clearTimer, [])
 
@@ -412,10 +425,11 @@ export default function SearchExpandNav({
             >
               <motion.button
                 aria-hidden={open || createOpen || undefined}
+                aria-expanded={createOpen}
                 aria-keyshortcuts="Meta+K Control+K"
                 aria-label="Create event"
                 className="pointer-events-auto flex h-[var(--nav-icon)] min-w-0 flex-1 items-center justify-center gap-2 rounded-[0.625rem] bg-primary px-4 text-sm font-semibold text-primary-foreground outline-none [transition:background-color_200ms_ease] hover:bg-primary/92 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring active:scale-[0.97]"
-                onClick={openCreate}
+                onClick={toggleCreate}
                 ref={createButtonRef}
                 tabIndex={open || createOpen ? -1 : 0}
                 type="button"

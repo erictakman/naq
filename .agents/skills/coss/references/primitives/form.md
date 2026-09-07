@@ -34,7 +34,11 @@ import { Input } from "@/components/ui/input"
 ## Minimal pattern
 
 ```tsx
-<Form onSubmit={(e) => {/* handle submit */}}>
+<Form
+  onSubmit={(e) => {
+    /* handle submit */
+  }}
+>
   <Field>
     <FieldLabel>Email</FieldLabel>
     <Input name="email" type="email" required />
@@ -76,4 +80,3 @@ import { Input } from "@/components/ui/input"
 ## Further reading
 
 - Base UI Forms handbook: `https://base-ui.com/react/handbook/forms.md`
-

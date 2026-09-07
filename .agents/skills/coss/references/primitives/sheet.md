@@ -70,7 +70,9 @@ Sheet from the right side with form:
 
 ```tsx
 <Sheet>
-  <SheetTrigger render={<Button variant="outline" />}>Edit Profile</SheetTrigger>
+  <SheetTrigger render={<Button variant="outline" />}>
+    Edit Profile
+  </SheetTrigger>
   <SheetPopup side="right">
     <SheetHeader>
       <SheetTitle>Edit Profile</SheetTitle>

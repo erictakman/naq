@@ -78,16 +78,16 @@ Drawer with handle:
 
 ```tsx
 <Drawer>
-  <DrawerTrigger render={<Button variant="outline" />}>Open Drawer</DrawerTrigger>
+  <DrawerTrigger render={<Button variant="outline" />}>
+    Open Drawer
+  </DrawerTrigger>
   <DrawerPopup>
     <DrawerCreateHandle />
     <DrawerHeader>
       <DrawerTitle>Edit Profile</DrawerTitle>
       <DrawerDescription>Make changes to your profile here.</DrawerDescription>
     </DrawerHeader>
-    <DrawerPanel>
-      {/* Form content */}
-    </DrawerPanel>
+    <DrawerPanel>{/* Form content */}</DrawerPanel>
     <DrawerFooter>
       <Button>Save</Button>
       <DrawerClose render={<Button variant="ghost" />}>Cancel</DrawerClose>

@@ -60,6 +60,16 @@ if (!Element.prototype.scrollIntoView) {
   })
 }
 
+// jsdom has no element scrolling at all, and the wheel picker drives itself
+// with scrollTo. Without this it throws the moment a time popover opens.
+if (!Element.prototype.scrollTo) {
+  Object.defineProperty(Element.prototype, "scrollTo", {
+    writable: true,
+    configurable: true,
+    value: () => {},
+  })
+}
+
 if (!Element.prototype.getAnimations) {
   Object.defineProperty(Element.prototype, "getAnimations", {
     writable: true,

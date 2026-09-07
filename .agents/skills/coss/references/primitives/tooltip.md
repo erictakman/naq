@@ -56,7 +56,9 @@ Tooltip on an icon-only button:
 
 ```tsx
 <Tooltip>
-  <TooltipTrigger render={<Button size="icon" variant="ghost" aria-label="Settings" />}>
+  <TooltipTrigger
+    render={<Button size="icon" variant="ghost" aria-label="Settings" />}
+  >
     <SettingsIcon aria-hidden="true" />
   </TooltipTrigger>
   <TooltipPopup>Settings</TooltipPopup>

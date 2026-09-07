@@ -1,7 +1,7 @@
-import path from "path";
-import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite-plus";
+import path from "node:path"
+import tailwindcss from "@tailwindcss/vite"
+import vinext from "vinext"
+import { defineConfig } from "vite-plus"
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -27,10 +27,10 @@ export default defineConfig({
       "yarn.lock",
     ],
   },
-  plugins: [react(), tailwindcss()],
+  plugins: [vinext(), tailwindcss()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": path.resolve(import.meta.dirname, "./src"),
     },
   },
-});
+})

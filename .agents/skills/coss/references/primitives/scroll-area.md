@@ -50,7 +50,9 @@ Horizontal scrolling (use wide inner content, not an `orientation` prop):
 <ScrollArea className="max-w-96 rounded-lg border">
   <div className="flex w-max gap-4 p-4">
     {items.map((item) => (
-      <div key={item} className="w-32 shrink-0">{item}</div>
+      <div key={item} className="w-32 shrink-0">
+        {item}
+      </div>
     ))}
   </div>
 </ScrollArea>

@@ -4,21 +4,21 @@ A segmented control is a shared visual treatment, not a standalone behavior. Cho
 
 ## Choose the behavior
 
-| Intent | Use | State model |
-| --- | --- | --- |
-| Choose one value, especially in a form | Radio Group | Exactly one mutually exclusive value |
-| Navigate to another URL or route | Links | Browser navigation with `aria-current="page"` on the current link |
+| Intent                                       | Use          | State model                                                          |
+| -------------------------------------------- | ------------ | -------------------------------------------------------------------- |
+| Choose one value, especially in a form       | Radio Group  | Exactly one mutually exclusive value                                 |
+| Navigate to another URL or route             | Links        | Browser navigation with `aria-current="page"` on the current link    |
 | Apply an exclusive filter or reversible mode | Toggle Group | At most one pressed item by default; the current item may be cleared |
-| Switch between associated content panels | Tabs | Each tab controls a matching panel |
+| Switch between associated content panels     | Tabs         | Each tab controls a matching panel                                   |
 
 Do not use Tabs for navigation links, form values, or filters merely because the result should look segmented. Do not use Toggle Group when one value must always remain selected; use Radio Group instead.
 
 ## Install a particle
 
-| Implementation | Small | Default | Large |
-| --- | --- | --- | --- |
-| Radio Group | `@coss/p-radio-group-7` | `@coss/p-radio-group-8` | `@coss/p-radio-group-9` |
-| Navigation links | `@coss/p-navigation-2` | `@coss/p-navigation-1` | `@coss/p-navigation-3` |
+| Implementation   | Small                   | Default                 | Large                   |
+| ---------------- | ----------------------- | ----------------------- | ----------------------- |
+| Radio Group      | `@coss/p-radio-group-7` | `@coss/p-radio-group-8` | `@coss/p-radio-group-9` |
+| Navigation links | `@coss/p-navigation-2`  | `@coss/p-navigation-1`  | `@coss/p-navigation-3`  |
 
 The CLI installs the relevant primitive and the shared `@coss/segmented-control` styling library automatically.
 

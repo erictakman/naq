@@ -1,5 +1,7 @@
+"use client"
+
 import * as React from "react"
-import { CalendarIcon, MapPinIcon, UserIcon } from "lucide-react"
+import { IconMapPin, IconCalendarWeekFilled, IconUser } from "@tabler/icons-react"
 
 import { Badge } from "@/components/ui/badge"
 import {
@@ -9,8 +11,8 @@ import {
   CardPanel,
   CardTitle,
 } from "@/components/ui/card"
-import { EventDetailsDialog } from "@/components/event-details-dialog"
-import { FloatingNav } from "@/components/floating-nav"
+import { EventDetailsDialog } from "@/components/blocks/events/event-details-dialog"
+import { FloatingNav } from "@/components/blocks/events/floating-nav"
 import { Empty, EmptyDescription, EmptyTitle } from "@/components/ui/empty"
 import {
   RadioGroupPrimitive,
@@ -28,10 +30,10 @@ import {
   initialEvents,
 } from "@/lib/events"
 
-type StatusFilter = "all" | EventStatus
+type StatusFilter = "All" | EventStatus
 
 const statusFilters: { value: StatusFilter; label: string }[] = [
-  { value: "all", label: "All" },
+  { value: "All", label: "All" },
   { value: "Scheduled", label: "Scheduled" },
   { value: "In progress", label: "In progress" },
   { value: "Done", label: "Done" },
@@ -76,7 +78,7 @@ function StatusSegmentedFilter({
 export function EventPlanner(): React.ReactElement {
   const [events, setEvents] = React.useState<EventItem[]>(initialEvents)
   const [query, setQuery] = React.useState("")
-  const [statusFilter, setStatusFilter] = React.useState<StatusFilter>("all")
+  const [statusFilter, setStatusFilter] = React.useState<StatusFilter>("All")
   const [selectedEventId, setSelectedEventId] = React.useState<string | null>(
     null
   )
@@ -89,7 +91,7 @@ export function EventPlanner(): React.ReactElement {
 
     return events.filter((event) => {
       const matchesStatus =
-        statusFilter === "all" || event.status === statusFilter
+        statusFilter === "All" || event.status === statusFilter
       const matchesQuery =
         normalizedQuery === "" ||
         [event.title, event.account, event.contact, event.location]
@@ -178,7 +180,8 @@ export function EventPlanner(): React.ReactElement {
                   <p className="mt-0.5 flex items-center gap-1.5 truncate text-xs font-medium tracking-wide text-muted-foreground uppercase">
                     <span>{event.type}</span>
                     <span aria-hidden="true">·</span>
-                    <MapPinIcon className="size-3 shrink-0 opacity-70" />
+
+                    <IconMapPin className="size-3 shrink-0 opacity-70" />
                     <span className="truncate tracking-normal normal-case">
                       {event.location}
                     </span>
@@ -187,7 +190,7 @@ export function EventPlanner(): React.ReactElement {
 
                 <div className="sm:w-40 sm:shrink-0">
                   <p className="flex items-center gap-1.5 truncate text-sm font-medium text-foreground">
-                    <UserIcon className="size-3.5 shrink-0 opacity-70" />
+                    <IconUser className="size-3.5 shrink-0 opacity-70" />
                     {event.account}
                   </p>
                   <p className="mt-0.5 truncate text-xs text-muted-foreground">
@@ -200,7 +203,7 @@ export function EventPlanner(): React.ReactElement {
 
                 <div className="sm:w-32 sm:shrink-0 sm:text-right">
                   <p className="flex items-center gap-1.5 font-mono text-xs text-foreground sm:justify-end">
-                    <CalendarIcon className="size-3.5 shrink-0 opacity-70" />
+                    <IconCalendarWeekFilled className="size-3.5 shrink-0 opacity-70" />
                     {formatEventDate(event.start)}
                   </p>
                   <p className="mt-0.5 font-mono text-xs text-muted-foreground">

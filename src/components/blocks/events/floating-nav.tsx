@@ -2,7 +2,7 @@
 
 import * as React from "react"
 
-import { CreateEventDialog } from "@/components/create-event-dialog"
+import { CreateEventDialog } from "@/components/blocks/events/create-event-dialog"
 import SearchExpandNav from "@/components/lab/search-expand-nav"
 import type { EventItem } from "@/lib/events"
 
@@ -27,6 +27,20 @@ export function FloatingNav({
     if (!next) createButtonRef.current?.focus()
   }
 
+  // The nav floats above the dialog, so the create button stays clickable while
+  // the palette is open. Clicking it again closes the palette rather than
+  // quietly stealing its focus - the same toggle ⌘K performs.
+  function toggleCreate() {
+    if (createOpen) closeCreate(false)
+    else openCreate()
+  }
+
+  // The search field takes precedence: opening it stands the create flow down,
+  // without pulling focus back to the create button on the way out.
+  function yieldToSearch() {
+    setCreateOpen(false)
+  }
+
   // ⌘K / Ctrl+K toggles Create event from anywhere on the page. The "/" bind
   // that opens search lives with the field itself, in SearchExpandNav.
   React.useEffect(() => {
@@ -49,9 +63,10 @@ export function FloatingNav({
           createButtonRef={createButtonRef}
           createOpen={createOpen}
           onQueryChange={onQueryChange}
-          openCreate={openCreate}
+          onSearchOpen={yieldToSearch}
           query={query}
           suggestions={[]}
+          toggleCreate={toggleCreate}
         />
       </div>
 

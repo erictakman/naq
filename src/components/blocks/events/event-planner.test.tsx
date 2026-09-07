@@ -1,8 +1,8 @@
-import { fireEvent, render, screen, within } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
 
-import { EventPlanner } from "@/components/event-planner"
+import { EventPlanner } from "@/components/blocks/events/event-planner"
 
 describe("EventPlanner", () => {
   it("filters the event list as the floating nav search box is used", async () => {
@@ -27,16 +27,13 @@ describe("EventPlanner", () => {
     await user.click(screen.getByText("Title"))
     await user.type(screen.getByRole("combobox"), "Brand new sync")
     await user.keyboard("{Enter}")
+    // Date & time seeds the draft with a date and a 09:00 start, which is what
+    // makes the event creatable.
+    await user.click(screen.getByText("Date & time"))
+    await user.click(screen.getByText("Today"))
     await user.click(
-      screen.getByRole("button", { name: /Apply 1 staged command/ })
+      screen.getByRole("button", { name: /Apply 2 staged commands/ })
     )
-
-    fireEvent.change(screen.getByLabelText("Date"), {
-      target: { value: "2026-08-01" },
-    })
-    fireEvent.change(screen.getByLabelText("Start time"), {
-      target: { value: "09:00" },
-    })
 
     const dialogRoot = document.querySelector('[role="presentation"]')
     expect(dialogRoot).not.toBeNull()

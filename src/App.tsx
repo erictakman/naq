@@ -1,4 +1,4 @@
-import { EventPlanner } from "@/components/event-planner"
+import { EventPlanner } from "@/components/blocks/events/event-planner"
 
 export function App() {
   return (

@@ -68,9 +68,9 @@ Use these snippets as fast conversion templates when migrating shadcn/Radix code
 const items = [
   { label: "Next.js", value: "next" },
   { label: "Vite", value: "vite" },
-];
+]
 
-<Select items={items}>
+;<Select items={items}>
   <SelectTrigger>
     <SelectValue placeholder="Select a framework" />
   </SelectTrigger>
@@ -146,7 +146,12 @@ coss wraps [Base UI OTP Field](https://base-ui.com/react/components/otp-field) (
 
 ```tsx
 // coss
-<OTPField aria-label="Verification code" length={6} value={value} onValueChange={setValue}>
+<OTPField
+  aria-label="Verification code"
+  length={6}
+  value={value}
+  onValueChange={setValue}
+>
   <OTPFieldInput />
   <OTPFieldInput aria-label="Character 2 of 6" />
 </OTPField>
