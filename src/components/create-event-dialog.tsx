@@ -361,7 +361,12 @@ export function CreateEventDialog({
       <div
         aria-label="Create event"
         aria-modal="true"
-        className="relative z-10"
+        // The wrapper carries the width so both steps stay centred on the
+        // page: a roomy palette, a slightly tighter review form.
+        className={cn(
+          "relative z-10 w-full px-4",
+          step === "palette" ? "max-w-[24rem]" : "max-w-[44rem]"
+        )}
         onKeyDown={handleDialogKeyDown}
         ref={panelRef}
         role="dialog"
@@ -373,7 +378,7 @@ export function CreateEventDialog({
             onStateChange={(state) =>
               setPaletteIdle(state.query === "" && state.chips.length === 0)
             }
-            width="max-w-[46rem]"
+            width="max-w-full"
           />
         ) : (
           <ReviewForm
@@ -417,7 +422,7 @@ function ReviewForm({
   }
 
   return (
-    <div className="flex w-120 max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border bg-card text-card-foreground shadow-[0_24px_48px_rgb(0_0_0/22%),0_2px_8px_rgb(0_0_0/10%)]">
+    <div className="flex w-full flex-col overflow-hidden rounded-2xl border bg-card text-card-foreground shadow-[0_24px_48px_rgb(0_0_0/22%),0_2px_8px_rgb(0_0_0/10%)]">
       <div className="flex flex-col gap-3.5 px-7 pt-6 pb-5">
         <div className="flex items-center justify-between gap-3">
           <button
