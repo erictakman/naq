@@ -67,7 +67,10 @@ const KNOWN_ACCOUNTS: [string, string][] = Array.from(
 // Who the two @mention fields offer: customer contacts (hinted with the company
 // they belong to) for Contact, teammates for Attendees.
 const KNOWN_CONTACTS: MentionPerson[] = KNOWN_ACCOUNTS.map(
-  ([account, contact]) => ({ name: contact, hint: account })
+  ([account, contact]) => ({
+    name: contact,
+    hint: account,
+  })
 )
 
 const TEAMMATES: MentionPerson[] = eventOwners.map((name) => ({ name }))
@@ -395,8 +398,8 @@ export function CreateEventDialog({
           className={cn(
             "pointer-events-auto relative z-10 mt-auto flex min-h-0 w-full flex-col",
             step === "palette"
-              ? "max-w-[24rem]"
-              : "max-h-[calc(100dvh-7rem)] max-w-[44rem]"
+              ? "max-w-96"
+              : "max-h-[calc(100dvh-7rem)] max-w-176"
           )}
           onKeyDown={handleDialogKeyDown}
           ref={panelRef}

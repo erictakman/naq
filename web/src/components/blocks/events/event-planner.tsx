@@ -1,7 +1,11 @@
 "use client"
 
 import * as React from "react"
-import { IconMapPin, IconCalendarWeekFilled, IconUser } from "@tabler/icons-react"
+import {
+  IconMapPin,
+  IconCalendarWeekFilled,
+  IconUser,
+} from "@tabler/icons-react"
 
 import { Badge } from "@/components/ui/badge"
 import {
@@ -30,7 +34,7 @@ import {
   initialEvents,
 } from "@/lib/events"
 
-type StatusFilter = "All" | EventStatus
+export type StatusFilter = "All" | EventStatus
 
 const statusFilters: { value: StatusFilter; label: string }[] = [
   { value: "All", label: "All" },
@@ -75,13 +79,22 @@ function StatusSegmentedFilter({
   )
 }
 
-export function EventPlanner(): React.ReactElement {
+export function EventPlanner({
+  query,
+  onQueryChange,
+  statusFilter,
+  onStatusFilterChange,
+  selectedEventId,
+  onSelectedEventIdChange,
+}: {
+  query: string
+  onQueryChange: (query: string) => void
+  statusFilter: StatusFilter
+  onStatusFilterChange: (status: StatusFilter) => void
+  selectedEventId: string | null
+  onSelectedEventIdChange: (id: string | null) => void
+}): React.ReactElement {
   const [events, setEvents] = React.useState<EventItem[]>(initialEvents)
-  const [query, setQuery] = React.useState("")
-  const [statusFilter, setStatusFilter] = React.useState<StatusFilter>("All")
-  const [selectedEventId, setSelectedEventId] = React.useState<string | null>(
-    null
-  )
 
   const selectedEvent =
     events.find((event) => event.id === selectedEventId) ?? null
@@ -139,7 +152,7 @@ export function EventPlanner(): React.ReactElement {
       <div className="flex items-center justify-end border-t px-6 py-4">
         <StatusSegmentedFilter
           value={statusFilter}
-          onChange={setStatusFilter}
+          onChange={onStatusFilterChange}
         />
       </div>
 
@@ -157,11 +170,11 @@ export function EventPlanner(): React.ReactElement {
               <li
                 key={event.id}
                 className="flex cursor-pointer flex-col gap-3 px-6 py-4 transition-colors outline-none hover:bg-accent/50 focus-visible:bg-accent/50 sm:flex-row sm:items-center sm:gap-4"
-                onClick={() => setSelectedEventId(event.id)}
+                onClick={() => onSelectedEventIdChange(event.id)}
                 onKeyDown={(keyEvent) => {
                   if (keyEvent.key === "Enter" || keyEvent.key === " ") {
                     keyEvent.preventDefault()
-                    setSelectedEventId(event.id)
+                    onSelectedEventIdChange(event.id)
                   }
                 }}
                 role="button"
@@ -201,12 +214,12 @@ export function EventPlanner(): React.ReactElement {
                   </p>
                 </div>
 
-                <div className="sm:w-32 sm:shrink-0 sm:text-right">
+                <div className="sm:w-40 sm:shrink-0 sm:text-right">
                   <p className="flex items-center gap-1.5 font-mono text-xs text-foreground sm:justify-end">
                     <IconCalendarWeekFilled className="size-3.5 shrink-0 opacity-70" />
                     {formatEventDate(event.start)}
                   </p>
-                  <p className="mt-0.5 font-mono text-xs text-muted-foreground">
+                  <p className="mt-0.5 font-mono text-xs whitespace-nowrap text-muted-foreground">
                     {formatEventTimeRange(event.start, event.end)}
                   </p>
                 </div>
@@ -220,7 +233,7 @@ export function EventPlanner(): React.ReactElement {
         event={selectedEvent}
         onDelete={handleDelete}
         onOpenChange={(nextOpen) => {
-          if (!nextOpen) setSelectedEventId(null)
+          if (!nextOpen) onSelectedEventIdChange(null)
         }}
         onSave={handleUpdate}
         open={selectedEvent !== null}
@@ -228,7 +241,7 @@ export function EventPlanner(): React.ReactElement {
 
       <FloatingNav
         onCreate={handleCreate}
-        onQueryChange={setQuery}
+        onQueryChange={onQueryChange}
         query={query}
       />
     </Card>

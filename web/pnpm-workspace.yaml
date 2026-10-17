@@ -1,5 +1,29 @@
 packages: []
 
+# Only resolve versions published at least 7 days ago (value in minutes).
+# Malicious releases, like the May 2026 @tanstack/* compromise, are usually
+# caught and pulled within hours.
+minimumReleaseAge: 10080
+minimumReleaseAgeExclude:
+  # Already locked before the policy was added; reviewed, no install scripts.
+  # Safe to drop after 2026-10-17, when it passes the 7-day window.
+  - oxlint-tailwindcss@1.16.0
+
 allowBuilds:
   esbuild: true
   msw: false
+catalog:
+  vite: npm:@voidzero-dev/vite-plus-core@1.0.0
+  vitest: 5.0.1
+  vite-plus: 1.0.0
+  "@vitest/ui": 5.0.1
+overrides:
+  vite@*: "catalog:"
+  vitest@*: "catalog:"
+peerDependencyRules:
+  allowAny:
+    - vite
+    - vitest
+  allowedVersions:
+    vite: "*"
+    vitest: "*"

@@ -16,7 +16,9 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 type DrawerPosition = "right" | "left" | "top" | "bottom"
 
 const DrawerContext: React.Context<{ position: DrawerPosition }> =
-  createContext<{ position: DrawerPosition }>({
+  createContext<{
+    position: DrawerPosition
+  }>({
     position: "bottom",
   })
 

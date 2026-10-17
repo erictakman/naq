@@ -11,15 +11,17 @@ An iOS picker drum built on native scroll-snap, with selection derived from scro
 ## Usage
 
 ```tsx
-"use client";
+"use client"
 
-import WheelList from "./inertial-wheel-list";
+import WheelList from "./inertial-wheel-list"
 
 // Every quarter hour of the day; the wheel starts on 9:00 AM (index 36).
-export const TIMES: string[] = [];
+export const TIMES: string[] = []
 for (let m = 0; m < 24 * 60; m += 15) {
-  const h = Math.floor(m / 60);
-  TIMES.push(`${h % 12 === 0 ? 12 : h % 12}:${String(m % 60).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`);
+  const h = Math.floor(m / 60)
+  TIMES.push(
+    `${h % 12 === 0 ? 12 : h % 12}:${String(m % 60).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`
+  )
 }
 
 export default function WheelListExample() {
@@ -31,20 +33,27 @@ export default function WheelListExample() {
         items={TIMES}
         label="Pick a start time"
         initialIndex={36}
-        onStateChange={(state) => console.log(state.settled ? `selected ${state.value}` : "coasting")}
+        onStateChange={(state) =>
+          console.log(state.settled ? `selected ${state.value}` : "coasting")
+        }
       />
 
       {/* drum={false}: a flat wheel - keeps the scale + fade, drops the rotateX. */}
-      <WheelList items={TIMES} label="Pick a start time" initialIndex={36} drum={false} />
+      <WheelList
+        items={TIMES}
+        label="Pick a start time"
+        initialIndex={36}
+        drum={false}
+      />
     </div>
-  );
+  )
 }
 ```
 
 ## Source - `@components/lab/inertial-wheel-list.tsx`
 
 ```tsx
-"use client";
+"use client"
 
 import {
   useCallback,
@@ -55,8 +64,14 @@ import {
   useState,
   type CSSProperties,
   type KeyboardEvent,
-} from "react";
-import { motion, useReducedMotion, useScroll, useTransform, type MotionValue } from "motion/react";
+} from "react"
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+  type MotionValue,
+} from "motion/react"
 
 // Inertial wheel list - the iOS picker drum, rebuilt on one principle: the
 // SCROLL POSITION IS THE STATE. Nothing is scroll-jacked and no library fakes
@@ -87,19 +102,19 @@ const WHEEL_VARS = {
   "--wheel-w": "14rem",
   "--wheel-h": "12.5rem",
   "--wheel-item": "2.5rem",
-} as CSSProperties;
+} as CSSProperties
 
 export interface WheelState {
-  value: string;
-  index: number;
-  count: number;
-  settled: boolean;
+  value: string
+  index: number
+  count: number
+  settled: boolean
 }
 
 interface Metrics {
-  itemH: number;
-  centers: number[];
-  half: number;
+  itemH: number
+  centers: number[]
+  half: number
 }
 
 // Fallback geometry (16px root): item 40px, viewport 200px - used until the
@@ -108,7 +123,7 @@ const fallbackMetrics = (count: number): Metrics => ({
   itemH: 40,
   centers: Array.from({ length: count }, (_, i) => 80 + 40 * i + 20),
   half: 100,
-});
+})
 
 export default function WheelList({
   items,
@@ -118,108 +133,127 @@ export default function WheelList({
   inspect = false,
   onStateChange,
 }: {
-  items: string[];
-  label?: string;
-  initialIndex?: number;
-  drum?: boolean;
-  inspect?: boolean;
-  onStateChange?: (state: WheelState) => void;
+  items: string[]
+  label?: string
+  initialIndex?: number
+  drum?: boolean
+  inspect?: boolean
+  onStateChange?: (state: WheelState) => void
 }) {
-  const scrollerRef = useRef<HTMLDivElement>(null);
-  const settleTimer = useRef(0);
-  const idBase = useId();
-  const reduced = useReducedMotion();
+  const scrollerRef = useRef<HTMLDivElement>(null)
+  const settleTimer = useRef(0)
+  const idBase = useId()
+  const reduced = useReducedMotion()
 
-  const [metrics, setMetrics] = useState<Metrics>(() => fallbackMetrics(items.length));
-  const [index, setIndex] = useState(initialIndex);
-  const [settled, setSettled] = useState(true);
-  const indexRef = useRef(initialIndex);
-  const metricsRef = useRef(metrics);
-  metricsRef.current = metrics;
+  const [metrics, setMetrics] = useState<Metrics>(() =>
+    fallbackMetrics(items.length)
+  )
+  const [index, setIndex] = useState(initialIndex)
+  const [settled, setSettled] = useState(true)
+  const indexRef = useRef(initialIndex)
+  const metricsRef = useRef(metrics)
+  metricsRef.current = metrics
 
-  const { scrollY } = useScroll({ container: scrollerRef });
+  const { scrollY } = useScroll({ container: scrollerRef })
 
   const clampIndex = useCallback(
     (i: number) => Math.min(Math.max(i, 0), items.length - 1),
-    [items.length],
-  );
+    [items.length]
+  )
 
   function handleScroll() {
     // Selection derives from the scroll on every frame; it commits when the
     // snap lands (scrollend where the engine has it, the quiet-timer elsewhere).
-    const scroller = scrollerRef.current;
+    const scroller = scrollerRef.current
     if (scroller) {
-      const next = clampIndex(Math.round(scroller.scrollTop / metricsRef.current.itemH));
+      const next = clampIndex(
+        Math.round(scroller.scrollTop / metricsRef.current.itemH)
+      )
       if (next !== indexRef.current) {
-        indexRef.current = next;
-        setIndex(next);
+        indexRef.current = next
+        setIndex(next)
       }
     }
-    setSettled(false);
-    window.clearTimeout(settleTimer.current);
-    settleTimer.current = window.setTimeout(() => setSettled(true), 140);
+    setSettled(false)
+    window.clearTimeout(settleTimer.current)
+    settleTimer.current = window.setTimeout(() => setSettled(true), 140)
   }
 
   function handleScrollEnd() {
-    window.clearTimeout(settleTimer.current);
-    setSettled(true);
+    window.clearTimeout(settleTimer.current)
+    setSettled(true)
   }
 
   function scrollToIndex(i: number, smooth = true) {
-    const scroller = scrollerRef.current;
-    if (!scroller) return;
+    const scroller = scrollerRef.current
+    if (!scroller) return
     scroller.scrollTo({
       top: clampIndex(i) * metricsRef.current.itemH,
       behavior: smooth && !reduced ? "smooth" : "auto",
-    });
+    })
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    const steps: Record<string, number> = { ArrowUp: -1, ArrowDown: 1, PageUp: -5, PageDown: 5 };
-    let target: number;
-    if (event.key in steps) target = indexRef.current + steps[event.key];
-    else if (event.key === "Home") target = 0;
-    else if (event.key === "End") target = items.length - 1;
-    else return;
-    event.preventDefault();
-    scrollToIndex(target);
+    const steps: Record<string, number> = {
+      ArrowUp: -1,
+      ArrowDown: 1,
+      PageUp: -5,
+      PageDown: 5,
+    }
+    let target: number
+    if (event.key in steps) target = indexRef.current + steps[event.key]
+    else if (event.key === "Home") target = 0
+    else if (event.key === "End") target = items.length - 1
+    else return
+    event.preventDefault()
+    scrollToIndex(target)
   }
 
   // Measure once (and on resize / new items): item height, each centre, and the
   // half-viewport - cached so the motion transforms never read layout.
   useLayoutEffect(() => {
-    const scroller = scrollerRef.current;
-    if (!scroller) return undefined;
+    const scroller = scrollerRef.current
+    if (!scroller) return undefined
     const measure = () => {
-      const options = scroller.querySelectorAll<HTMLElement>('[role="option"]');
-      if (!options.length) return;
+      const options = scroller.querySelectorAll<HTMLElement>('[role="option"]')
+      if (!options.length) return
       setMetrics({
         itemH: options[0].offsetHeight,
-        centers: Array.from(options, (el) => el.offsetTop + el.offsetHeight / 2),
+        centers: Array.from(
+          options,
+          (el) => el.offsetTop + el.offsetHeight / 2
+        ),
         half: scroller.clientHeight / 2,
-      });
-    };
-    measure();
-    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
-    observer?.observe(scroller);
-    return () => observer?.disconnect();
-  }, [items]);
+      })
+    }
+    measure()
+    const observer =
+      typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null
+    observer?.observe(scroller)
+    return () => observer?.disconnect()
+  }, [items])
 
   // Land on the initial value before first paint - no snap animation on load.
   useLayoutEffect(() => {
-    const scroller = scrollerRef.current;
-    if (scroller) scroller.scrollTop = clampIndex(initialIndex) * metricsRef.current.itemH;
+    const scroller = scrollerRef.current
+    if (scroller)
+      scroller.scrollTop = clampIndex(initialIndex) * metricsRef.current.itemH
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [])
 
-  useEffect(() => () => window.clearTimeout(settleTimer.current), []);
+  useEffect(() => () => window.clearTimeout(settleTimer.current), [])
 
   useEffect(() => {
-    onStateChange?.({ value: items[index], index, count: items.length, settled });
-  }, [items, index, settled, onStateChange]);
+    onStateChange?.({
+      value: items[index],
+      index,
+      count: items.length,
+      settled,
+    })
+  }, [items, index, settled, onStateChange])
 
-  const optionId = (i: number) => `${idBase}-opt-${i}`;
-  const value = items[index];
+  const optionId = (i: number) => `${idBase}-opt-${i}`
+  const value = items[index]
 
   return (
     <div className="relative w-full max-w-[var(--wheel-w)]" style={WHEEL_VARS}>
@@ -249,7 +283,9 @@ export default function WheelList({
                 label={item}
                 selected={i === index}
                 scrollY={scrollY}
-                center={metrics.centers[i] ?? fallbackMetrics(items.length).centers[i]}
+                center={
+                  metrics.centers[i] ?? fallbackMetrics(items.length).centers[i]
+                }
                 half={metrics.half}
                 drum={drum}
                 flat={Boolean(reduced)}
@@ -278,7 +314,7 @@ export default function WheelList({
         {settled ? `Selected ${value}` : "Scrolling"}
       </p>
     </div>
-  );
+  )
 }
 
 // One drum row. `t` is the item's signed distance from the viewport centre in
@@ -297,20 +333,22 @@ function Option({
   flat,
   onClick,
 }: {
-  id: string;
-  label: string;
-  selected: boolean;
-  scrollY: MotionValue<number>;
-  center: number;
-  half: number;
-  drum: boolean;
-  flat: boolean;
-  onClick: () => void;
+  id: string
+  label: string
+  selected: boolean
+  scrollY: MotionValue<number>
+  center: number
+  half: number
+  drum: boolean
+  flat: boolean
+  onClick: () => void
 }) {
-  const t = useTransform(scrollY, (v) => Math.max(-1, Math.min(1, (center - (v + half)) / half)));
-  const rotateX = useTransform(t, (tv) => (flat || !drum ? 0 : -38 * tv));
-  const scale = useTransform(t, (tv) => (flat ? 1 : 1.14 - 0.34 * Math.abs(tv)));
-  const opacity = useTransform(t, (tv) => (flat ? 1 : 1 - 0.55 * Math.abs(tv)));
+  const t = useTransform(scrollY, (v) =>
+    Math.max(-1, Math.min(1, (center - (v + half)) / half))
+  )
+  const rotateX = useTransform(t, (tv) => (flat || !drum ? 0 : -38 * tv))
+  const scale = useTransform(t, (tv) => (flat ? 1 : 1.14 - 0.34 * Math.abs(tv)))
+  const opacity = useTransform(t, (tv) => (flat ? 1 : 1 - 0.55 * Math.abs(tv)))
 
   return (
     <motion.li
@@ -323,6 +361,6 @@ function Option({
     >
       {label}
     </motion.li>
-  );
+  )
 }
 ```

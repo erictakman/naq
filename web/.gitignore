@@ -28,3 +28,7 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+.vitest/
+
+# Local backups
+.backup

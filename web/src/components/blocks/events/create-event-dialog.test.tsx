@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it, vi } from "vite-plus/test"
 
 import { CreateEventDialog } from "@/components/blocks/events/create-event-dialog"
 import {
@@ -204,9 +204,9 @@ describe("CreateEventDialog", () => {
     await user.click(trigger)
     await user.click(screen.getByRole("option", { name: "Zoom" }))
 
-    expect(screen.getByRole("combobox", { name: "Platform" })).toHaveTextContent(
-      "Zoom"
-    )
+    expect(
+      screen.getByRole("combobox", { name: "Platform" })
+    ).toHaveTextContent("Zoom")
   })
 
   it("offers a wheel of times behind the start time field", async () => {

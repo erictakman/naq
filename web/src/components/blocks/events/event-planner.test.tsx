@@ -1,13 +1,13 @@
-import { render, screen, within } from "@testing-library/react"
+import { screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it } from "vite-plus/test"
 
-import { EventPlanner } from "@/components/blocks/events/event-planner"
+import { renderApp } from "@/test/render-app"
 
 describe("EventPlanner", () => {
   it("filters the event list as the floating nav search box is used", async () => {
     const user = userEvent.setup()
-    render(<EventPlanner />)
+    await renderApp()
 
     await user.click(screen.getByRole("button", { name: "Search events" }))
     await user.type(
@@ -21,7 +21,7 @@ describe("EventPlanner", () => {
 
   it("adds an event created via the floating nav to the sorted list", async () => {
     const user = userEvent.setup()
-    render(<EventPlanner />)
+    await renderApp()
 
     await user.click(screen.getByRole("button", { name: "Create event" }))
     await user.click(screen.getByText("Title"))
@@ -49,11 +49,51 @@ describe("EventPlanner", () => {
 
   it("still opens the event details dialog when a row is clicked", async () => {
     const user = userEvent.setup()
-    render(<EventPlanner />)
+    await renderApp()
 
     await user.click(screen.getByText("Weekly sales standup"))
 
     expect(screen.getByRole("dialog")).toBeInTheDocument()
     expect(screen.getByDisplayValue("Weekly sales standup")).toBeInTheDocument()
+  })
+})
+
+describe("EventPlanner URL state", () => {
+  it("restores the search, status filter and open event from the URL", async () => {
+    await renderApp("/events?q=standup&status=Scheduled&event=evt-standup")
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument()
+    expect(screen.getByDisplayValue("Weekly sales standup")).toBeInTheDocument()
+    expect(
+      screen.queryByText("Q3 Pipeline Review — North Region")
+    ).not.toBeInTheDocument()
+  })
+
+  it("writes the selected event to the URL and closes it on back", async () => {
+    const user = userEvent.setup()
+    const { router } = await renderApp()
+
+    await user.click(screen.getByText("Weekly sales standup"))
+    expect(router.state.location.search).toEqual({ event: "evt-standup" })
+
+    router.history.back()
+
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    )
+    expect(router.state.location.search).toEqual({})
+  })
+
+  it("ignores invalid search params", async () => {
+    const { router } = await renderApp("/events?status=Bogus")
+
+    expect(router.state.location.search).toEqual({})
+    expect(screen.getByText("Weekly sales standup")).toBeInTheDocument()
+  })
+
+  it("redirects / to /events", async () => {
+    const { router } = await renderApp("/")
+
+    expect(router.state.location.pathname).toBe("/events")
   })
 })

@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom/vitest"
 
 import { cleanup } from "@testing-library/react"
-import { afterEach, vi } from "vitest"
+import { afterEach, vi } from "vite-plus/test"
 
 afterEach(() => {
   cleanup()
@@ -69,6 +69,13 @@ if (!Element.prototype.scrollTo) {
     value: () => {},
   })
 }
+
+// The router resets scroll on navigation, which jsdom only logs as unimplemented.
+Object.defineProperty(window, "scrollTo", {
+  writable: true,
+  configurable: true,
+  value: () => {},
+})
 
 if (!Element.prototype.getAnimations) {
   Object.defineProperty(Element.prototype, "getAnimations", {

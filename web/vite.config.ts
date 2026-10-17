@@ -1,6 +1,6 @@
 import path from "node:path"
 import tailwindcss from "@tailwindcss/vite"
-import vinext from "vinext"
+import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite-plus"
 
 // https://vite.dev/config/
@@ -25,9 +25,11 @@ export default defineConfig({
       "package-lock.json",
       "pnpm-lock.yaml",
       "yarn.lock",
+      ".next/**",
+      "next-env.d.ts",
     ],
   },
-  plugins: [vinext(), tailwindcss()],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "./src"),
