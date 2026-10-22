@@ -1,5 +1,6 @@
 import { createRouter, type RouterHistory } from "@tanstack/react-router"
 
+import { componentsRoute } from "@/routes/components"
 import { eventsRoute } from "@/routes/events"
 import { indexRoute } from "@/routes/index"
 import { paperArticleRoute, paperRoute } from "@/routes/paper"
@@ -10,6 +11,7 @@ const routeTree = rootRoute.addChildren([
   eventsRoute,
   paperRoute,
   paperArticleRoute,
+  componentsRoute,
 ])
 
 export function createAppRouter(history?: RouterHistory) {

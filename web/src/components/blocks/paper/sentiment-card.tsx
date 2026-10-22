@@ -50,7 +50,7 @@ function describeConsensus(sentiment: SentimentBreakdown): {
       ? "Overwhelmingly for"
       : share >= 0.45
         ? "Leaning to"
-        : "Split, slightly"
+        : "Split, edging to"
   return { strength, leader }
 }
 
